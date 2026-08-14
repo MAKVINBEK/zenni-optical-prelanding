@@ -37,8 +37,8 @@ All variables are optional. A missing or malformed value is ignored; its script 
 
 Every outbound CTA uses the shared `TrackedLink` component and `trackCta` helper. A click records `cta_click` with:
 
-- `cta_name`
-- `cta_section`
+- `label`
+- `section`
 - `destination_url`
 
 The event is pushed to `dataLayer`, sent to GA4 when configured, and sent through `reachGoal` to Yandex Metrika when configured. The destination then opens in a new browser tab.

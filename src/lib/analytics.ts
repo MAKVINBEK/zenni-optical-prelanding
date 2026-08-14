@@ -20,6 +20,21 @@ const analyticsIds = {
 
 let initialized = false
 
+function isValidGaId(value: string | undefined): value is string {
+  return Boolean(value && /^G-[A-Z0-9]{10}$/i.test(value))
+}
+
+function isValidGtmId(value: string | undefined): value is string {
+  return Boolean(value && /^GTM-[A-Z0-9]{4,}$/i.test(value))
+}
+
+function isValidYmId(value: string | undefined): value is string {
+  const numericId = Number(value)
+  return Boolean(
+    value && /^\d+$/.test(value) && Number.isSafeInteger(numericId) && numericId > 0,
+  )
+}
+
 function addAsyncScript(id: string, src: string) {
   if (document.getElementById(id)) return
   const script = document.createElement('script')
@@ -35,13 +50,13 @@ function getDataLayer() {
 }
 
 function initializeGtm() {
-  if (!analyticsIds.gtm || !/^GTM-[A-Z0-9]+$/i.test(analyticsIds.gtm)) return
+  if (!isValidGtmId(analyticsIds.gtm)) return
   getDataLayer().push({ 'gtm.start': Date.now(), event: 'gtm.js' })
   addAsyncScript('gtm-script', `https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(analyticsIds.gtm)}`)
 }
 
 function initializeGa() {
-  if (!analyticsIds.ga || !/^G-[A-Z0-9]+$/i.test(analyticsIds.ga)) return
+  if (!isValidGaId(analyticsIds.ga)) return
   window.gtag = (...args: unknown[]) => getDataLayer().push(args)
   window.gtag('js', new Date())
   window.gtag('config', analyticsIds.ga, { send_page_view: true })
@@ -49,7 +64,7 @@ function initializeGa() {
 }
 
 function initializeYandexMetrika() {
-  if (!analyticsIds.ym || !/^\d+$/.test(analyticsIds.ym)) return
+  if (!isValidYmId(analyticsIds.ym)) return
   const ym: YandexMetrikaFunction = (...args: unknown[]) => {
     ym.a = ym.a || []
     ym.a.push(args)
@@ -76,11 +91,11 @@ export function initializeAnalytics() {
 type CtaEvent = { name: string; section: string; url: string }
 
 export function trackCta({ name, section, url }: CtaEvent) {
-  const eventData = { cta_name: name, cta_section: section, destination_url: url }
+  const eventData = { label: name, section, destination_url: url }
   getDataLayer().push({ event: 'cta_click', ...eventData })
   window.gtag?.('event', 'cta_click', eventData)
 
-  if (analyticsIds.ym && /^\d+$/.test(analyticsIds.ym)) {
+  if (isValidYmId(analyticsIds.ym)) {
     window.ym?.(Number(analyticsIds.ym), 'reachGoal', 'cta_click', eventData)
   }
 }
